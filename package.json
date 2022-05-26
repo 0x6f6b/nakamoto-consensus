@@ -1,0 +1,11 @@
+{
+  "name": "nakamoto-consensus",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/0x6f6b/nakamoto-consensus.git",
+  "author": "0x6f6b <jackmertensdev@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "level": "^8.0.0"
+  }
+}
