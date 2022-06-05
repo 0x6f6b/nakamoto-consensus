@@ -15,6 +15,7 @@ class TxOutput {
   }
 }
 
+
 class Transaction {
   constructor(fromAddress, toAddress, amount, db) {
     // firstly, create the inputs for the transaction
@@ -22,7 +23,7 @@ class Transaction {
 
     // iterate through the chain until we find valid outputs to spend
     let total = 0;
-    
+
   }
 }
 
