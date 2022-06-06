@@ -7,6 +7,8 @@
   "license": "MIT",
   "dependencies": {
     "crypto-js": "^4.1.1",
-    "level": "^8.0.0"
+    "elliptic": "^6.5.4",
+    "level": "^8.0.0",
+    "prompt-async": "^0.9.9"
   }
 }

@@ -1,4 +1,5 @@
 const CryptoJS = require('crypto-js');
+const { Level } = require('level');
 
 const TARGET = 0xFAB4643C9EECCE1AA639D1A4284AE63DCDDF3479F584E2135AFF04D6A76n; // about 20 seconds on my cpu
 
@@ -32,7 +33,10 @@ class Block {
   }
 }
 
-function genesisBlock(db) {
+async function genesisBlock() {
+  let db = new Level(__dirname + '/blockchain', { valueEncoding: 'json' });
+  await db.open()
+
   console.log("Creating the Genesis Block...");
   // creating the genesis block
   genesisBlock = new Block(null, "0");
@@ -43,15 +47,17 @@ function genesisBlock(db) {
   console.log("finished the proof of work...");
 
   // set the lastHash to the genesis block's hash
-  db.put("lastHash", genesisBlock.hash);
+  await db.put("lastHash", genesisBlock.hash);
   console.log("last hash set to genesis block's hash");
 
   // set the lastBlockNumber to 0
-  db.put("lastBlockNumber", 0);
+  await db.put("lastBlockNumber", 0);
   console.log("last block number set to 0");
 
-  db.put(genesisBlock.hash, genesisBlock); // add the genesis block to the blockchain"
+  await db.put(genesisBlock.hash, genesisBlock); // add the genesis block to the blockchain"
   console.log("added the genesis block to the blockchain");
+
+  await db.close();
 }
 
 async function addBlock(blockchain, newBlock) {
