@@ -1,4 +1,4 @@
-const CryptoJS = require('crypto-js');
+const { createHash } = require("crypto");
 
 const COINBASE_AMOUNT = 50;
 
@@ -8,18 +8,17 @@ class Transaction {
     this.fromAddress = fromAddress;
     this.toAddress = toAddress;
     this.amount = amount;
-  }
-}
 
-function signTransaction(transaction, privateKey) {
-  const hash = CryptoJS.SHA256(transaction.fromAddress + transaction.toAddress + transaction.amount).toString();
-  const signature = CryptoJS.HmacSHA256(hash, privateKey).toString();
-  transaction.signature = signature;
-  return transaction;
+    // hash the transaction
+    this.hash = createHash("sha256")
+      .update(JSON.stringify(this.fromAddress + this.toAddress + this.amount))
+      .digest("hex");
+    console.log(this.hash);
+  }
 }
 
 function coinbaseTransaction(minerAddress) {
   return new Transaction(null, minerAddress, COINBASE_AMOUNT);
 }
 
-module.exports = { Transaction, coinbaseTransaction, signTransaction };
+module.exports = { Transaction, coinbaseTransaction };
