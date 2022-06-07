@@ -1,14 +1,19 @@
 const prompt = require('prompt-async')
-
 const ec = require('elliptic').ec;
+var ecCurve = new ec('secp256k1');
 
 const { Level } = require('level');
+const { generateKeyPairSync, generateKeyPair } = require('crypto')
+
+// accessing the file system
 const fs = require('fs');
 
 const BlockUtils = require('./Block');
 const Block = BlockUtils.Block;
 
 const TransactUtils = require('./Transaction');
+
+
 const Transaction = TransactUtils.Transaction;
 
 if (!fs.existsSync(__dirname + '/blockchain')) {
@@ -81,18 +86,21 @@ function getTransactions() {
 }
 
 function createAccount() {
-  // generate an elliptic curve key pair
-  const ecKey = new ec('secp256k1');
-  const keyPair = ecKey.genKeyPair();
+  // generate a key pair
+  const keys = ecCurve.genKeyPair();
 
-  // get the public key
-  const publicKey = keyPair.getPublic('hex');
+  let pubPoints = keys.getPublic();
+  let pub = pubPoints.encode('hex');
+  console.log("Public Key: " + pub)
 
-  // get the private key
-  const privateKey = keyPair.getPrivate('hex');
+  let priv = keys.getPrivate();
+  let privHex = priv.toString(16);
 
-  console.log("Your public key is: " + publicKey)
-  console.log("Your private key is: " + privateKey)
+  // save the account to the database
+  let account = {
+    publicKey: pub,
+    privateKey: privHex
+  }
 
   console.log("Would you like to save this account? (y/n)")
   prompt.start()
@@ -101,7 +109,7 @@ function createAccount() {
     if (err) { return onErr(err) }
     switch (result.choice) {
       case 'y':
-        saveAccount(keyPair)
+        saveAccount(account)
         home()
         break
       case 'n':
@@ -112,43 +120,50 @@ function createAccount() {
   })
 }
 
-async function saveAccount(keyPair) {
+async function saveAccount(account) {
   // save the account to the database
   let accountDB = new Level(__dirname + '/accounts', { valueEncoding: 'json' })
   await accountDB.open()
-  await accountDB.put("userAccount", keyPair)
+  await accountDB.put("userAccount", account)
   await accountDB.close()
 }
 
 async function formTransaction() {
-  let recipientPublicKey;
-  let amount;
-  let senderPublicKey;
-
   let accountDB = new Level(__dirname + '/accounts', { valueEncoding: 'json' })
+
   await accountDB.open()
-  senderKeyPair = await accountDB.get("userAccount")
-  senderPublicKey = senderKeyPair.getPublic('hex')
+  let account = await accountDB.get("userAccount")
+
+  let keys = ecCurve.keyFromPrivate(account.privateKey, 'hex');
   await accountDB.close()
 
-  console.log("Your Public Key is: " + senderPublicKey)
+  console.log("Your Public Key was successfully fetched")
+  let pubPoints = keys.getPublic();
+  let pub = pubPoints.encode('hex');
+  console.log("Public Key: " + pub)
 
-  prompt.start()
-  await prompt.get(['Recipient Public Key'], function (err, result) {
-    if (err) { return onErr(err) }
-    recipientPublicKey = result.recipient
-  })
+  // prompt.start()
+  // await prompt.get(['Recipient Public Key'], function (err, result) {
+  //   if (err) { return onErr(err) }
+  //   recipientPublicKey = ecCurve.keyFromPublic(result.recipient, 'hex');
+  // })
 
-  prompt.start()
-  await prompt.get(['Amount'], function (err, result) {
-    if (err) { return onErr(err) }
-    amount = result.amount
-  })
+  // prompt.start()
+  // await prompt.get(['Amount'], function (err, result) {
+  //   if (err) { return onErr(err) }
+  //   amount = result.amount
+  // })
+
+  console.log("I got here")
+  // output the private
+  let privPoints = keys.getPrivate();
+  let priv = privPoints.toString(16);
+  console.log("Private Key: " + priv)
 
   // create a new transaction
-  const transaction = new Transaction(senderPublicKey, recipientPublicKey, amount)
+  const transaction = new Transaction(pub, null, 20)
 
   // sign the transaction
-  const signedTransaction = TransactUtils.signTransaction(transaction, await accountDB.get("userAccount").getPrivate('hex'))
+  const signedTransaction = TransactUtils.signTransaction(transaction, privateKey)
   console.log("Signed Transaction: " + signedTransaction)
 }
